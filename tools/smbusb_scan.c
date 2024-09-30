@@ -1,5 +1,5 @@
 /*
-* smbusb_scan 
+* smbusb_scan
 * Scanning tool for SMBus
 *
 * Copyright (c) 2016 Viktor <github@karosium.e4ward.com>
@@ -34,22 +34,22 @@
 #if defined(_WIN32) || defined(_WIN64)
 char* strsep(char** stringp, const char* delim)
 {
-  char* start = *stringp;
-  char* p;
+	char* start = *stringp;
+	char* p;
 
-  p = (start != NULL) ? strpbrk(start, delim) : NULL;
+	p = (start != NULL) ? strpbrk(start, delim) : NULL;
 
-  if (p == NULL)
-  {
-    *stringp = NULL;
-  }
-  else
-  {
-    *p = '\0';
-    *stringp = p + 1;
-  }
+	if (p == NULL)
+	{
+		*stringp = NULL;
+	}
+	else
+	{
+		*p = '\0';
+		*stringp = p + 1;
+	}
 
-  return start;
+	return start;
 }
 #endif
 
@@ -58,21 +58,20 @@ char* strsep(char** stringp, const char* delim)
 #define SCAN_COMMAND_WRITE 3
 
 void printHeader() {
-
-	  printf("------------------------------------\n");
-	  printf("             smbusb_scan\n");
- 	  printf("------------------------------------\n");
+	printf("------------------------------------\n");
+	printf("             smbusb_scan\n");
+	printf("------------------------------------\n");
 }
 void printUsage() {
-	  printHeader();
-	  printf("options:\n");
-	  printf("--address                , -a                  =   scan for address ACK (START, ADDR, STOP)\n");
-	  printf("--command <addr>         , -c <addr>           =   scan for command ACK (START, ADDR, CMD, STOP)\n");
-	  printf("--command-write <addr>   , -w <addr>           =   probe command writability for byte, word, block or more\n");
-	  printf("--begin=<#>              , -b <#>              =   address or command to start scan at\n");
-	  printf("--end=<#>                , -e <#>              =   address or command to end scan at\n");
-	  printf("--skip=<#,#,...>         , -s <#,#,...>        =   comma delimited list of HEX addresses or commands to skip during scan\n");
-	  printf("\n<addr> is always the read address in HEX\n");
+	printHeader();
+	printf("options:\n");
+	printf("--address                , -a                  =   scan for address ACK (START, ADDR, STOP)\n");
+	printf("--command <addr>         , -c <addr>           =   scan for command ACK (START, ADDR, CMD, STOP)\n");
+	printf("--command-write <addr>   , -w <addr>           =   probe command writability for byte, word, block or more\n");
+	printf("--begin=<#>              , -b <#>              =   address or command to start scan at\n");
+	printf("--end=<#>                , -e <#>              =   address or command to end scan at\n");
+	printf("--skip=<#,#,...>         , -s <#,#,...>        =   comma delimited list of HEX addresses or commands to skip during scan\n");
+	printf("\n<addr> is always the read address in HEX\n");
 }
 
 void printSkipMap(int start, int end, unsigned char skipMap[]) {
@@ -82,20 +81,20 @@ void printSkipMap(int start, int end, unsigned char skipMap[]) {
 	printf("Scan range: %02x - %02x\n",start,end);
 	printf("Skipping: ");
 
-	for (i=0;i<256;i++) { 
-		if (skipMap[i] == 255) { 
-			printf("%x ",i); 
+	for (i=0;i<256;i++) {
+		if (skipMap[i] == 255) {
+			printf("%x ",i);
 			haveSkip=1;
-		} 
+		}
 	}
 	if (haveSkip==0) printf("None");
-	
+
 	printf("\n------------------------------------\n");
 }
 
 
 int main(int argc, char **argv)
-{                       
+{
 	unsigned char skipMap[256] = {0};
 	int address=0;
 	static int scanMode=0;
@@ -116,65 +115,61 @@ int main(int argc, char **argv)
 	while (1)
 	{
 		static struct option long_options[] =
-	        {
-	          {"address", no_argument,       0, 'a'},
-	          {"command", required_argument,       0, 'c'},
-	 	  {"command-write", required_argument, 0,'w'},		
-	 	  {"begin", required_argument, 0,'b'},
-	 	  {"end", required_argument, 0,'e'},
+		{
+			{"address", no_argument,       0, 'a'},
+			{"command", required_argument,       0, 'c'},
+			{"command-write", required_argument, 0,'w'},
+			{"begin", required_argument, 0,'b'},
+			{"end", required_argument, 0,'e'},
+			{"skip",  required_argument, 0, 's'},
+			{0, 0, 0, 0}
+		};
 
-	          {"skip",  required_argument, 0, 's'},
+		int option_index = 0;
 
-	          {0, 0, 0, 0}
-        };
+		c = getopt_long (argc, argv, "ac:w:s:e:b:h",
+			long_options, &option_index);
 
-      int option_index = 0;
+		if (c == -1)
+			break;
 
-      c = getopt_long (argc, argv, "ac:w:s:e:b:h",
-                       long_options, &option_index);
+		switch (c)
+		{
+		case 0:
+			if (long_options[option_index].flag != 0)
+				break;
+		case 'a':
+			scanMode = SCAN_ADDRESS;
+			break;
+		case 'c':
+			scanMode = SCAN_COMMAND;
+			address = strtol(optarg,NULL,16);
+			break;
+		case 'w':
+			scanMode = SCAN_COMMAND_WRITE;
+			address = strtol(optarg,NULL,16);
+			break;
+		case 's':
+			while ((token = strsep(&optarg, ",")) != NULL)
+				skipMap[strtol(token,NULL,16)] = 0xFF;
+			break;
+		case 'b':
+			start=strtol(optarg,NULL,16);
+			break;
+		case 'e':
+			end=strtol(optarg,NULL,16);
+			break;
+		case 'h':
+			case '?':
+			printUsage();
+			exit(0);
+			break;
+		default:
+			abort;
+		}
+	}
 
-      if (c == -1)
-        break;
-
-      switch (c)
-        {
-        case 0:
-          if (long_options[option_index].flag != 0)
-            break;
-	case 'a':
-		scanMode = SCAN_ADDRESS;		
-		break;
-	case 'c':
-		scanMode = SCAN_COMMAND;
-		address = strtol(optarg,NULL,16);
-		break;
-	case 'w':
-		scanMode = SCAN_COMMAND_WRITE;
-		address = strtol(optarg,NULL,16);
-		break;
-
-        case 's':
-	     while ((token = strsep(&optarg, ",")) != NULL)
-		skipMap[strtol(token,NULL,16)] = 0xFF;
-          break;
-
-	case 'b':
-		start=strtol(optarg,NULL,16);
-	  break;
-	case 'e':
-		end=strtol(optarg,NULL,16);
-	  break;
-	case 'h':
-        case '?':
-		printUsage();
-		exit(0);
-          break;
-        default:
-	  abort;
-        }
-    }
-
-	printHeader();	
+	printHeader();
 
 	if ((status = SMBOpenDeviceVIDPID(SMB_DEFAULT_VID,SMB_DEFAULT_PID)) >0) {
 		printf("Success. SMBusb Firmware Version: %d.%d.%d\n",status&0xFF,(status >>8)&0xFF,(status >>16)&0xFF);
@@ -189,29 +184,27 @@ int main(int argc, char **argv)
 			skipMap[0xA0] = 0xFF; 	// reserved addresses belong to the FX2 config eeprom
 			skipMap[0xA1] = 0xFF;   // messing with it like this can hang the device
 			printSkipMap(start,end,skipMap);
-		
+
 			for(i=start;i<=end;i++) {
-				if (skipMap[i] != 0xFF) { 
-					status = SMBTestAddressACK(i);		
+				if (skipMap[i] != 0xFF) {
+					status = SMBTestAddressACK(i);
 					if (status< 0) printf("[%x] ERROR: %d\n",i,status);
 					if (status == 0xFF)  printf("[%x] ACK\n",i);
 				}
 			}
-				
+
 			break;
 		case SCAN_COMMAND:
 			printf("Scanning for commands..\n");
 			printSkipMap(start,end,skipMap);
 			for(i=start;i<=end;i++) {
-				if (skipMap[i] != 0xFF) { 
+				if (skipMap[i] != 0xFF) {
 					status = SMBTestCommandACK(address,i);
 					if (status< 0) printf("[%x] ERROR: %d\n",i,status);
 					if (status ==0xFF)  printf("[%x] ACK\n",i);
 				}
 			}
-				
-				
-	
+
 			break;
 		case SCAN_COMMAND_WRITE:
 			printf("Scanning for command writability..\n");
@@ -221,8 +214,8 @@ int main(int argc, char **argv)
 					status = SMBTestCommandWrite(address,i);
 					if (status< 0) {
 						 printf("[%x] ERROR: %d\n",i,status);
-					} else {					
-		                        	if (status>0) { 
+					} else {
+						if (status>0) {
 							didAck=1;
 							printf("[%x] ACK",i);
 						}
@@ -237,13 +230,13 @@ int main(int argc, char **argv)
 						}
 						if (status>4) {
 							printf(", >Block writable");
-						}					
+						}
 					}
 					if (didAck) {
 						printf("\n");
 						didAck=0;
 					}
-                                	
+
 				}
 			}
 
@@ -251,7 +244,7 @@ int main(int argc, char **argv)
 		default:
 			printUsage();
 			exit(1);
-		
-	}	
+
+	}
 
 }
