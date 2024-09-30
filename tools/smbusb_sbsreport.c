@@ -32,9 +32,9 @@
 #include "libsmbusb.h"
 
 typedef struct {
-    unsigned char unknown_0[4];
-    unsigned short cell_voltage[4];
-    unsigned char unknown_1[2];
+	unsigned char unknown_0[4];
+	unsigned short cell_voltage[4];
+	unsigned char unknown_1[2];
 } lenovo_data_t __attribute__ ((aligned (1)));
 
 int main(int argc, char*argv[])
@@ -59,26 +59,26 @@ int main(int argc, char*argv[])
 
 	printf("-------------------------------------------------\n");
 
-
 	memset(tempStr,0,256);
-	if (SMBReadBlock(0x16,0x20,tempStr) <=0) strcpy(tempStr,"ERROR");
+	if (SMBReadBlock(0x16,0x20,tempStr) <=0)
+		strcpy(tempStr,"ERROR");
 
 	printf("Manufacturer Name:          %s\n",tempStr);
 
 	memset(tempStr,0,256);
-	if (SMBReadBlock(0x16,0x21,tempStr) <=0) strcpy(tempStr,"ERROR");
+	if (SMBReadBlock(0x16,0x21,tempStr) <=0)
+		strcpy(tempStr,"ERROR");
 	printf("Device Name:                %s\n",tempStr);
 
 	memset(tempStr,0,256);
-	if (SMBReadBlock(0x16,0x22,tempStr) <=0) strcpy(tempStr,"ERROR");
+	if (SMBReadBlock(0x16,0x22,tempStr) <=0)
+		strcpy(tempStr,"ERROR");
 	printf("Device Chemistry:           %s\n",tempStr);
 
 	printf("Serial Number:              %u\n",SMBReadWord(0x16,0x1c));
 
-	tempWord = SMBReadWord(0x16,0x1b);
-	printf("Manufacture Date:	    %u.%02u.%02u\n",1980+(tempWord>>9),
-						     	tempWord>>5&0xF,
-							tempWord&0x1F);
+	tempWord = SMBReadWord(0x16, 0x1B);
+	printf("Manufacture Date:           %u.%02u.%02u\n", 1980+(tempWord>>9), tempWord>>5&0xF, tempWord&0x1F);
 
 	printf("\n");
 	printf("Manufacturer Access:        %04x\n",SMBReadWord(0x16,0x00));
@@ -99,38 +99,38 @@ int main(int argc, char*argv[])
 
 	printf("Temperature:                %02.02f degC\n",(float)((SMBReadWord(0x16,0x08)*0.1)-273.15)); // unit: 0.1Kelvin
 
-	printf("Voltage:                    %u mV\n",SMBReadWord(0x16,0x09));
+	printf("Voltage:                    %u mV\n", SMBReadWord(0x16,0x09));
 	printf("Current:                    %d mA\n", (int16_t)SMBReadWord(0x16, 0x0a));
 	printf("Average Current:            %d mA\n", (int16_t)SMBReadWord(0x16, 0x0b));
-	printf("Max Error:                  %u %%\n",SMBReadWord(0x16,0x0c));
-	printf("Relative State Of Charge    %u %%\n",SMBReadWord(0x16,0x0d));
-	printf("Absolute State Of Charge    %u %%\n",SMBReadWord(0x16,0x0e));
-	printf("Remaining Capacity:         %u mAh(/10mWh)\n",SMBReadWord(0x16,0x0f));
-	printf("Full Charge Capacity:       %u mAh(/10mWh)\n",SMBReadWord(0x16,0x10));
-	printf("Run Time To Empty:          %u min\n",SMBReadWord(0x16,0x11));
-	printf("Average Time To Empty:      %u min\n",SMBReadWord(0x16,0x12));
-	printf("Average Time To Full:       %u min\n",SMBReadWord(0x16,0x13));
-	printf("Charging Current:           %u mA\n",SMBReadWord(0x16,0x14));
-	printf("Charging Voltage:           %u mV\n",SMBReadWord(0x16,0x15));
-	printf("Battery Status:             %04x\n",SMBReadWord(0x16,0x16));
-	printf("Cycle Count:                %u\n",SMBReadWord(0x16,0x17));
-	printf("Design Capacity:            %u mAh(/10mWh)\n",SMBReadWord(0x16,0x18));
-	printf("Design Voltage:             %u mV\n",SMBReadWord(0x16,0x19));
-	printf("Specification Info:         %04x\n",SMBReadWord(0x16,0x1a));
+	printf("Max Error:                  %u %%\n", SMBReadWord(0x16,0x0c));
+	printf("Relative State Of Charge    %u %%\n", SMBReadWord(0x16,0x0d));
+	printf("Absolute State Of Charge    %u %%\n", SMBReadWord(0x16,0x0e));
+	printf("Remaining Capacity:         %u mAh(/10mWh)\n", SMBReadWord(0x16, 0x0F));
+	printf("Full Charge Capacity:       %u mAh(/10mWh)\n", SMBReadWord(0x16, 0x10));
+	printf("Run Time To Empty:          %u min\n", SMBReadWord(0x16, 0x11));
+	printf("Average Time To Empty:      %u min\n", SMBReadWord(0x16, 0x12));
+	printf("Average Time To Full:       %u min\n", SMBReadWord(0x16, 0x13));
+	printf("Charging Current:           %u mA\n", SMBReadWord(0x16, 0x14));
+	printf("Charging Voltage:           %u mV\n", SMBReadWord(0x16, 0x15));
+	printf("Battery Status:             %04x\n", SMBReadWord(0x16, 0x16));
+	printf("Cycle Count:                %u\n", SMBReadWord(0x16, 0x17));
+	printf("Design Capacity:            %u mAh(/10mWh)\n",SMBReadWord(0x16, 0x18));
+	printf("Design Voltage:             %u mV\n", SMBReadWord(0x16, 0x19));
+	printf("Specification Info:         %04x\n", SMBReadWord(0x16, 0x1A));
 
 	memset(block, 0, 256);
-    size = SMBReadBlock(0x16, 0x23, block);
+	size = SMBReadBlock(0x16, 0x23, block);
 	if (size < sizeof(lenovo_data_t)) {
-        printf("Manufacturer Data: ");
-        for (i = 0; i < size; i++) {
-            printf("%02x ", block[i]);
-        }
-        printf("\n");
-    } else {
-        lenovo_data_t *lenovo_data = (lenovo_data_t*)block;
-        for (i = 0; i < 4; i++) {
-            printf("Cell %d voltage:             %u mV\n", i,
-                    lenovo_data->cell_voltage[3-i]);
-        }
-    }
+		printf("Manufacturer Data: ");
+		for (i = 0; i < size; i++) {
+			printf("%02x ", block[i]);
+		}
+		printf("\n");
+	} else {
+		lenovo_data_t *lenovo_data = (lenovo_data_t*)block;
+		for (i = 0; i < 4; i++) {
+			printf("Cell %d voltage:             %u mV\n", i,
+					lenovo_data->cell_voltage[3-i]);
+		}
+	}
 }

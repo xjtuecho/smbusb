@@ -18,11 +18,11 @@ int SMBOpenDeviceBusAddr(unsigned int bus, unsigned int addr);
 
 ```c
 void SMBCloseDevice();
-	
+
 unsigned int SMBInterfaceId();
 ```
     returns 0x4d5355 if firmware is responding properly
-    
+
 ```c
 void SMBSetDebugLogFunc(void *logFunc);
 ```
@@ -63,19 +63,19 @@ int SMBWriteBlock(unsigned int address, unsigned char command, unsigned char *da
     The standard SMBus Write Block protocol. Writes a maximum of 255 bytes to "command"
 
 
-* Return values all for functions above will be >=0 on success. 
+* Return values all for functions above will be >=0 on success.
 * Usually the number of bytes read for reads and 0 for writes.
 * Values <0 are libusb error codes.
 * Address parameters are always the READ address of the device.
-    
-    
+
+
 ```c
 extern void SMBEnablePEC(unsigned char state);
 ```
     0 disables, 1 enables SMBus Packet Error Checking. This is done in-firmware.
-    When PEC is enabled reads will hard fail on PEC errors. Use SMBGetLastReadPECFail() 
+    When PEC is enabled reads will hard fail on PEC errors. Use SMBGetLastReadPECFail()
     to check whether hard-fails (retval < 0)  were due to a PEC mismatch.
-    
+
     Note that PEC is enabled by default and should be disabled manually if not needed.
 
 ```c
@@ -87,7 +87,7 @@ unsigned char SMBGetLastReadPECFail();
 
 ##### Arbitrary SMBus(/I2C)
 ```c
-int SMBWrite(unsigned char start, unsigned char restart, unsigned char stop, 
+int SMBWrite(unsigned char start, unsigned char restart, unsigned char stop,
              unsigned char *data, unsigned int len);
 ```
     Write some bytes.
@@ -98,18 +98,18 @@ int SMBRead(unsigned int len, unsigned char* data, unsigned char lastRead);
 ```
     Read some bytes.
     Any number of bytes can be read. if lastRead is ==1 then STOP will be sent afterwards.
-    
+
     SMBWrite and SMBRead allow implementation of unstandard SMBus devices or I2C.
 ```c
 unsigned int SMBGetArbPEC();
 ```
     If PEC has been enabled with SMBEnablePEC(1) then PEC will be calculated on the fly when using
-    SMBWrite and SMBRead commands. 
+    SMBWrite and SMBRead commands.
     The firmware will read the extra PEC byte when SMBRead is called with lastRead==1
-    GetArbPec returns a 16bit word with the MSB being the PEC received from the device 
+    GetArbPec returns a 16bit word with the MSB being the PEC received from the device
     and the LSB being the calculated PEC.
-    
+
     Note that not all devices will support PEC.
-    
+
     Note that PEC is enabled by default and should be disabled manually if not needed.
-    
+

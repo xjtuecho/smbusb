@@ -43,7 +43,7 @@ int parse_hex_line(char *theline, char bytes[], int *addr, int *num,  int *code)
 	if ( strlen(theline) < (11 + (len * 2)) ) return 0;
 	if (!sscanf(ptr, "%04x", addr)) return 0;
 	ptr += 4;
-	//  printf("Line: length=%d Addr=%d\n", len, *addr); 
+	//  printf("Line: length=%d Addr=%d\n", len, *addr);
 	if (!sscanf(ptr, "%02x", code)) return 0;
 	ptr += 2;
 	sum = (len & 255) + ((*addr >> 8) & 255) + (*addr & 255) + (*code & 255);
@@ -68,10 +68,10 @@ int CypressWriteRam(libusb_device_handle *device,unsigned int addr, unsigned cha
 	status = libusb_control_transfer(device,
 					LIBUSB_ENDPOINT_OUT | LIBUSB_REQUEST_TYPE_VENDOR | LIBUSB_RECIPIENT_DEVICE,
 					0xA0,
-					addr&0xFFFF, 
+					addr&0xFFFF,
 					addr>>16,
-					buf, 
-					len, 
+					buf,
+					len,
 					1000);
 	return status;
 
@@ -92,13 +92,13 @@ int CypressUploadIhxFirmware(libusb_device_handle *device, char *buf, unsigned i
 	tempBuf[len] = 0;
 	memcpy(tempBuf,buf,len);
 
-	line = strtok(tempBuf,"\n");	
+	line = strtok(tempBuf,"\n");
 
 	i=CypressReset(device,1);
 
 	if (i<0) {
 		free(tempBuf);
-	 	return i;
+		return i;
 	}
 	while ((line != NULL) && (code !=1)) {
 		parse_hex_line(line,bytes,&addr,&num,&code);
@@ -112,7 +112,7 @@ int CypressUploadIhxFirmware(libusb_device_handle *device, char *buf, unsigned i
 
 		}
 		if (code !=1)
-			line = strtok(NULL,"\n");		
+			line = strtok(NULL,"\n");
 	}
 	free(tempBuf);
 	i=CypressReset(device,0);

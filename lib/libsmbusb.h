@@ -62,7 +62,7 @@
 #define SMB_GET_MRQ_PECS	0x55
 
 #define SMB_STOP 0x60
-                                 
+
 // SMB Hacking and Discovery
 
 #define SMB_TEST_ADDRESS_ACK 0x90

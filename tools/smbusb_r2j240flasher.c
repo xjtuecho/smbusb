@@ -36,7 +36,7 @@
 
 #define CMD_WRITE_RAM 0xFD
 
-#define CMD_ERASE_BLOCK 0x20 
+#define CMD_ERASE_BLOCK 0x20
 
 #define CMD_READ_CLEAR_STATUS_REG 0x50
 
@@ -44,6 +44,9 @@
 
 #define FIRMWARE_ADDRESS 0x4000
 #define FIRMWARE_SIZE 0x8000
+
+#define DATAFLASH_ADDRESS 0x3000
+#define DATAFLASH_SIZE 0x1000
 
 #define DATAFLASH1_ADDRESS 0x3000
 #define DATAFLASH1_SIZE 0x400
@@ -54,6 +57,14 @@
 #define DATAFLASH3_ADDRESS 0xC000
 #define DATAFLASH3_SIZE 0x2000
 
+#define DATAFLASH4_ADDRESS 0x3800
+#define DATAFLASH4_SIZE 0x400
+
+#define DATAFLASH5_ADDRESS 0x3C00
+#define DATAFLASH5_SIZE 0x400
+
+#define DATAFLASH6_ADDRESS 0xE000
+#define DATAFLASH6_SIZE 0x2000
 
 int eraseFlashBlock(unsigned int address) {
 	int status;
@@ -86,7 +97,7 @@ int readRam(int address, unsigned int size, unsigned char *buf) {
 
 	block[0]=0x17;
 	status= SMBWrite(0,1,0,block,1);
-	
+
 	return SMBRead(size,buf,1);
 }
 
@@ -106,43 +117,44 @@ int writeRam(int address, unsigned int size, unsigned char *buf) {
 	if (status <0) return status;
 
 	status= SMBWrite(0,0,1,buf,size);
-	
+
 	return status;
-	
 }
 
 void printHeader() {
-
-	  printf("------------------------------------\n");
-	  printf("        smbusb_r2j240flasher\n");
- 	  printf("------------------------------------\n");
+	printf("------------------------------------\n");
+	printf("        smbusb_r2j240flasher\n");
+	printf("------------------------------------\n");
 }
+
 void printUsage() {
-	  printHeader();
-	  printf("options:\n");
-	  printf("--dump=<file> ,  -d <file>              =   dump the ram (or flash, which is mapped in ram) to <file>\n");
-	  printf("--write=<file> ,   -w <file>            =   write the <file> to the ram (or flash)\n");
-	  printf("--erase                                 =   just erase the flash block\n");
-	  printf("--address=0x<addr> , -a 0x<addr>        =   ram address from which read or write starts\n");
-	  printf("--size=0x<size> ,  -s 0x<size>          =   size of data to read or write\n");
-	  printf("--preset=<preset> , -p <preset>         =   sets address and size based on a preset, see below.\n");
-	  printf("--execute                               =   exit the Boot ROM and execute firmware\n");
-	  printf("--no-verify                             =   skip verification after flashing (not recommended)\n");
-	  printf("--fix-lgc-static-checksum               =   adds fixed checksum to end of data (LGC algo.)\n");
-	  printf("                                            (use when flashing modified static data)\n");
-	  printf("\n");
-	  printf("Presets:\n");
-	  printf("df1                                     =   DataFlash1 (usually dynamic data to persist between resets)\n");
-	  printf("df2                                     =   DataFlash2 (usually dynamic data to persist between resets)\n");
-	  printf("df3                                     =   DataFlash3 (usually static data)\n");
-	  printf("fw                                      =   The firmware\n");
-	  printf("full1                                   =   0-FFFF first half of a full dump\n");
-	  printf("full2                                   =   10000-11FFF second half of full dump\n");
-	  printf("                                            Note: this is probably the boot rom and is unwritable\n");
-	  printf("                                                  full1 will be enough for most puproses\n");
-	 
-
+	printHeader();
+	printf("options:\n");
+	printf("--dump=<file> ,  -d <file>        = dump the ram (or flash, which is mapped in ram) to <file>\n");
+	printf("--write=<file> ,   -w <file>      = write the <file> to the ram (or flash)\n");
+	printf("--erase                           = just erase the flash block\n");
+	printf("--address=0x<addr> , -a 0x<addr>  = ram address from which read or write starts\n");
+	printf("--size=0x<size> ,  -s 0x<size>    = size of data to read or write\n");
+	printf("--preset=<preset> , -p <preset>   = sets address and size based on a preset, see below.\n");
+	printf("--execute                         = exit the Boot ROM and execute firmware\n");
+	printf("--no-verify                       = skip verification after flashing (not recommended)\n");
+	printf("--fix-lgc-static-checksum         = adds fixed checksum to end of data (LGC algo.)\n");
+	printf("                                    (use when flashing modified static data)\n");
+	printf("\n");
+	printf("Presets:\n");
+	printf("df1                               = DataFlash1 (0x3000 1kB dynamic data to persist between resets)\n");
+	printf("df2                               = DataFlash2 (0x3400 1kB dynamic data to persist between resets)\n");
+	printf("df4                               = DataFlash4 (0x3800 1kB static data, SN, calibration data, etc)\n");
+	printf("df5                               = DataFlash5 (0x3C00 1kB static data)\n");
+	printf("fw                                = firmware   (0x4000 32kB)\n");
+	printf("df3                               = DataFlash3 (0xC000 8kB static data)\n");
+	printf("df6                               = DataFlash6 (0xE000 8kB static data)\n");
+	printf("full1                             = 0x0000 64kB first half of a full dump\n");
+	printf("full2                             = 0x10000 8kB second half of full dump\n");
+	printf("                                     Note: this is probably the boot rom and is unwritable\n");
+	printf("                                          full1 will be enough for most purposes\n");
 }
+
 void DumpHex(const void* data, size_t size) {
 	char ascii[17];
 	size_t i, j;
@@ -173,7 +185,7 @@ void DumpHex(const void* data, size_t size) {
 }
 
 int main(int argc, char **argv)
-{                       
+{
 	char *ramIn = NULL;
 	char *ramOut= NULL;
 
@@ -203,101 +215,100 @@ int main(int argc, char **argv)
 	while (1)
 	{
 		static struct option long_options[] =
-	        {
-	          {"confirm-delete", no_argument,       &confirmDelete, 1},
-	          {"no-verify", no_argument,       &noVerify, 1},
-	          {"execute",  no_argument, &opExecute,1},
-		  {"erase",  no_argument,&opErase,1},
-		  {"fix-lgc-static-checksum", no_argument, &lgcChecksumFix,1},
+		{
+			{"confirm-delete", no_argument, &confirmDelete, 1},
+			{"no-verify",      no_argument, &noVerify,  1},
+			{"execute",        no_argument, &opExecute, 1},
+			{"erase",          no_argument, &opErase,   1},
+			{"fix-lgc-static-checksum", no_argument, &lgcChecksumFix, 1},
+			{"address",        required_argument, 0, 'a'},
+			{"dump",           required_argument, 0, 'd'},
+			{"size",           required_argument, 0, 's'},
+			{"write",          required_argument, 0, 'w'},
+			{"preset",         required_argument, 0, 'p'},
+			{0, 0, 0, 0}
+		};
 
-	          {"address",    required_argument, 0, 'a'},
-	          {"dump",	required_argument, 0, 'd'},
-	          {"size",    required_argument, 0, 's'},
-	          {"write",  required_argument, 0, 'w'},
+		int option_index = 0;
 
-		  {"preset", required_argument,0,'p'},
-	          {0, 0, 0, 0}
-        };
+		c = getopt_long (argc, argv, "d:a:s:w:p:e", long_options, &option_index);
 
-      int option_index = 0;
+		if (c == -1)
+			break;
 
-      c = getopt_long (argc, argv, "d:a:s:w:p:e",
-                       long_options, &option_index);
-
-      if (c == -1)
-        break;
-
-      switch (c)
-        {
-        case 0:
-          if (long_options[option_index].flag != 0)
-            break;
-
-        case 'a':
-          	opAddress=strtol(optarg,NULL,16);	
-          break;
-
-        case 'd':
-          	ramOut=optarg;
-          break;
-
-        case 'w':
-          	ramIn=optarg;
-          break;
-	case 'p':
-		if (strcmp(optarg,"df1")==0) {
-			opAddress=DATAFLASH1_ADDRESS;
-			opSize=DATAFLASH1_SIZE;
-		} else if (strcmp(optarg,"df2")==0) {
-			opAddress=DATAFLASH2_ADDRESS;
-			opSize=DATAFLASH2_SIZE;
-		} else if (strcmp(optarg,"df3")==0) {
-			opAddress=DATAFLASH3_ADDRESS;
-			opSize=DATAFLASH3_SIZE;
-		} else if (strcmp(optarg,"full1")==0) {
-			opAddress=0;
-			opSize=0x10000;
-		} else if (strcmp(optarg,"full2")==0) {
-			opAddress=0x10000;
-			opSize=0x2000;
-		} else if (strcmp(optarg,"fw")==0) {
-			opAddress=FIRMWARE_ADDRESS;
-			opSize=FIRMWARE_SIZE;
+		switch (c)
+		{
+		case 0:
+			if (long_options[option_index].flag != 0)
+				break;
+		case 'a':
+			opAddress=strtol(optarg,NULL,16);
+			break;
+		case 'd':
+			ramOut=optarg;
+			break;
+		case 'w':
+			ramIn=optarg;
+			break;
+		case 'p':
+			if (strcmp(optarg,"df1")==0) {
+				opAddress = DATAFLASH1_ADDRESS;
+				opSize = DATAFLASH1_SIZE;
+			} else if (strcmp(optarg,"df2")==0) {
+				opAddress = DATAFLASH2_ADDRESS;
+				opSize = DATAFLASH2_SIZE;
+			} else if (strcmp(optarg,"df3")==0) {
+				opAddress = DATAFLASH3_ADDRESS;
+				opSize = DATAFLASH3_SIZE;
+			} else if (strcmp(optarg,"df4")==0) {
+				opAddress = DATAFLASH4_ADDRESS;
+				opSize = DATAFLASH4_SIZE;
+			} else if (strcmp(optarg,"df5")==0) {
+				opAddress = DATAFLASH5_ADDRESS;
+				opSize = DATAFLASH5_SIZE;
+			} else if (strcmp(optarg,"df6")==0) {
+				opAddress = DATAFLASH6_ADDRESS;
+				opSize = DATAFLASH6_SIZE;
+			} else if (strcmp(optarg,"full1")==0) {
+				opAddress = 0;
+				opSize = 0x10000;
+			} else if (strcmp(optarg,"full2")==0) {
+				opAddress = 0x10000;
+				opSize = 0x2000;
+			} else if (strcmp(optarg,"fw")==0) {
+				opAddress = FIRMWARE_ADDRESS;
+				opSize = FIRMWARE_SIZE;
+			}
+			break;
+		case 's':
+			opSize = strtol(optarg, NULL, 16);
+			break;
+		case '?':
+			printUsage();
+			exit(0);
+			break;
+		default:
+			abort;
 		}
+	}
 
-
-	  break;
-        case 's':
-          	opSize=strtol(optarg,NULL,16);
-          break;
-
-        case '?':
-		printUsage();
-		exit(0);
-          break;
-        default:
-	  abort;
-        }
-    }
-
-	printHeader();	
-	if ((status = SMBOpenDeviceVIDPID(SMB_DEFAULT_VID,SMB_DEFAULT_PID)) >0) {
-		printf("SMBusb Firmware Version: %d.%d.%d\n",status&0xFF,(status >>8)&0xFF,(status >>16)&0xFF);
+	printHeader();
+	if ((status = SMBOpenDeviceVIDPID(SMB_DEFAULT_VID,SMB_DEFAULT_PID)) > 0) {
+		printf("SMBusb Firmware Version: %d.%d.%d\n",status&0xFF,(status>>8)&0xFF,(status>>16)&0xFF);
 	} else {
-			
 		printf("Error: %s\n",SMBGetErrorString(status));
 		exit(0);
 	}
 
 	SMBEnablePEC(0); // Renesas BootROM does not support PEC :(
 
-	memset(block,0,255);			
-	status = SMBReadBlock(0x16,CMD_SBS_CHEMISTRY,block); // read SBS Chemistry.. should return "LION" if running firmware
+	memset(block, 0, 255);
+	status = SMBReadBlock(0x16, CMD_SBS_CHEMISTRY, block); // read SBS Chemistry.. should return "LION" if running firmware
 
 	if (status == 4) {
-		printf("Error communicating with the Boot ROM.\nChip is running firmware\n");		
+		printf("Error communicating with the Boot ROM.\nChip is running firmware\n");
 		printf("Note that there's no universal way to enter the Boot ROM on a programmed chip.\n");
-		printf("The command(s) and password(s) vary by make and model of the pack.\n");	
+		printf("The command(s) and password(s) vary by make and model of the pack.\n");
 		exit(1);
 	}
 
@@ -316,8 +327,8 @@ int main(int argc, char **argv)
 		}
 
 		status=readRam(opAddress,opSize,block);
-		
-		if (status >0) {			
+
+		if (status >0) {
 			printf("Done!\n");
 		} else {
 			printf("Error: %s\n",SMBGetErrorString(status));
@@ -326,9 +337,9 @@ int main(int argc, char **argv)
 		fwrite(block,opSize,1,outFile);
 
 		fclose(outFile);
-		
+
 	}
-	
+
 	if (ramIn !=NULL) {
 		if (!confirmDelete) {
 			printf("This may erase and reprogram flash memory on the microcontroller.\nIf you're sure add --confirm-delete and try again.\n");
@@ -337,10 +348,10 @@ int main(int argc, char **argv)
 
 		inFile = fopen(ramIn,"rb");
 
-		if (inFile != NULL) { 
+		if (inFile != NULL) {
 			fseek(inFile, 0L, SEEK_END);
 			i = ftell(inFile);
-			rewind(inFile);	
+			rewind(inFile);
 			if (i != opSize) {
 				printf("File size does not match defined size\n");
 				exit(4);
@@ -349,38 +360,36 @@ int main(int argc, char **argv)
 			printf("Error opening input file\n");
 			exit(3);
 		}
-		fread(block,opSize,1,inFile);
+		fread(block, opSize, 1, inFile);
 
 		if (lgcChecksumFix) {
 			chk=0;
-			for(j=0;j<(opSize/4)-1;j++) {
+			for(j=0; j<(opSize/4)-1; j++) {
 				chk -= *((uint32_t *)block+j);
 			}
-		
+
 			*((uint32_t *)block+j) = chk;
 			printf("Fixing LGC static checksum..\nDone!\n");
 		}
 
 		printf("Erasing flash block starting at 0x%04x ...\n",opAddress);
-		if (eraseFlashBlock(opAddress)>0) {
+		if (eraseFlashBlock(opAddress) > 0) {
 			printf("Done!\n");
 		} else {
 			printf("ERROR!\n");
 			exit(0);
 		}
 
+		printf("Writing memory 0x%04x-0x%04x ...\n", opAddress, opAddress+opSize-1);
 
-		printf("Writing memory 0x%04x-0x%04x ...\n",opAddress,opAddress+opSize-1);
-
-		status = writeRam(opAddress,opSize,block);	
+		status = writeRam(opAddress, opSize, block);
 
 		if (status>0) {
-			fprintf(stderr,"Done!\n");
+			fprintf(stderr, "Done!\n");
 		} else {
-			fprintf(stderr,"Write Error: %s\n",SMBGetErrorString(status));
+			fprintf(stderr, "Write Error: %s\n", SMBGetErrorString(status));
 
 		}
-
 
 		fprintf(stderr,"Done!\n");
 
@@ -388,15 +397,13 @@ int main(int argc, char **argv)
 			printf("Verifying 0x%04x-0x%04x ...\n",opAddress,opAddress+opSize-1);
 			readRam(opAddress,opSize,block2);
 			if (i=memcmp(block,block2,opSize) == 0) {
-					printf("Verified OK!\n");
-
+				printf("Verified OK!\n");
 			} else {
-					printf("Verify FAIL at 0x%04x\n",i);
+				printf("Verify FAIL at 0x%04x\n",i);
 			}
-		}		
+		}
 
-		fclose(inFile);		
-		
+		fclose(inFile);
 	}
 	if (opErase) {
 		if (!confirmDelete) {
@@ -415,5 +422,4 @@ int main(int argc, char **argv)
 		printf("Exiting Boot ROM and starting firmware\n");
 		SMBWriteWord(0x16,0,CMD_EXECUTE_FLASH);
 	}
-
 }
