@@ -139,14 +139,14 @@ void printUsage()
 {
 	printHeader();
 	printf("options:\n");
-	printf("--save-program=<file> ,  -p <file>          =   save the chip's program flash to <file>\n");
-	printf("--save-eeprom=<file> ,   -e <file>          =   save the chip's eeprom(data) flash to <file>\n");
-	printf("--flash-program=<file> , -f <file>          =   flash the <file> to the chip's program flash\n");
-	printf("--flash-eeprom=<file> ,  -w <file>          =   flash the <file> to the chip's eeprom(data) flash\n");
-
-	printf("--execute                                   =   exit the Boot ROM and execute program flash\n");
-	printf("--no-verify                                 =   skip verification after flashing (not recommended)\n");
-	printf("--no-pec                                    =   disable SMBus Packet Error Checking (not recommended)\n");
+	printf("--save-program=<file>,  -p <file> = save the chip's program flash to <file>\n");
+	printf("--save-eeprom=<file>,   -e <file> = save the chip's eeprom(data) flash to <file>\n");
+	printf("--flash-program=<file>, -f <file> = flash the <file> to the chip's program flash\n");
+	printf("--flash-eeprom=<file>,  -w <file> = flash the <file> to the chip's eeprom(data) flash\n");
+	printf("--enter                           = try to enter the Boot ROM\n");
+	printf("--execute                         = exit the Boot ROM and execute program flash\n");
+	printf("--no-verify                       = skip verification after flashing (not recommended)\n");
+	printf("--no-pec                          = disable SMBus Packet Error Checking (not recommended)\n");
 }
 
 int main(int argc, char **argv)
@@ -160,6 +160,7 @@ int main(int argc, char **argv)
 	static int noPec = 0;
 	static int confirmDelete = 0;
 	static int execute = 0;
+	static int enter = 0;
 	unsigned char block[256];
 	unsigned char block2[256];
 
@@ -183,6 +184,7 @@ int main(int argc, char **argv)
 			{"no-verify", no_argument, &noVerify, 1},
 			{"no-pec", no_argument, &noPec, 1},
 			{"execute", no_argument, &execute, 1},
+			{"enter", no_argument, &enter, 1},
 
 			{"save-program", required_argument, 0, 'p'},
 			{"save-eeprom", required_argument, 0, 'e'},
@@ -265,9 +267,46 @@ int main(int argc, char **argv)
 
 	if (status == 4)
 	{
-		printf("Error communicating with the Boot ROM.\nChip is running firmware\n");
-		printf("Note that there's no universal way to enter the Boot ROM on a programmed chip.\n");
-		printf("The command(s) and password(s) vary by make and model of the pack.\n");
+		if(enter)
+		{
+			// 1. Send 0x0214 to 0x71
+			// 2. Read Word X from 0x73
+			// 3. Send (0x10000 - X) to 0x71
+			// 4. Send 0x0517 to 0x70
+			int status = 0, comp = 0;
+
+			printf("Send 0x0214 to 0x71\n");
+			status = SMBWriteWord(0x16, 0x71, 0x0214);
+			if(status < 0)
+			{
+				printf("error %d\n", status);
+				exit(1);
+			}
+			status = SMBReadWord(0x16, 0x73);
+			printf("Read Word 0x%04X from 0x73\n", status);
+			comp = 0x10000 - status;
+			printf("Send 0x%04X to 0x71\n", comp);
+			status = SMBWriteWord(0x16, 0x71, comp);
+			if(status < 0)
+			{
+				printf("error %d:\n", status);
+				exit(2);
+			}
+			printf("Send 0x0517 to 0x70\n");
+			status = SMBWriteWord(0x16, 0x70, 0x0517);
+			if(status < 0)
+			{
+				printf("error %d:\n", status);
+				exit(3);
+			}
+			printf("Now we are in the ROM! Good luck!\n");
+		}
+		else
+		{
+			printf("Error communicating with the Boot ROM.\nChip is running firmware\n");
+			printf("Note that there's no universal way to enter the Boot ROM on a programmed chip.\n");
+			printf("The command(s) and password(s) vary by make and model of the pack.\n");
+		}
 		exit(1);
 	}
 
